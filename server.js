@@ -1,6 +1,6 @@
 var users={};
 var urls={};
-var urooms={room1:0,room2:0,room3:0};
+var urooms={"1":[],"2":[],"3":[]};
 urls["/guess"]="/Guess.html";
 function User(id,name,room) {
    this.id = id;
@@ -21,7 +21,7 @@ function User(id,name,room) {
 	  this.oponent=player;
    };
    this.getOponent=function(){
-	  return oponent;
+	  return this.oponent;
    };
 }
 
@@ -57,15 +57,18 @@ function guessMain(){
 		socket.on('user nickname', function(msg){// enter into a room
 			console.log('user nickname: ' + msg.nickname);
 			users[socket.id]=new User(socket.id,msg.nickname,msg.roomNum);
-			if (urooms[msg.roomNum]<2){
-				urooms[msg.roomNum]=urooms[msg.roomNum]+1;
+			var creatRoom="";
+			if (urooms[msg.roomNum]==undefined){urooms[msg.roomNum.toString()]=[];creatRoom=" and created room "+msg.roomNum.toString();}
+			if (urooms[msg.roomNum].length<2){
+				urooms[msg.roomNum].push(socket.id);
 				console.log("new user "+msg.roomNum);
 				socket.join(msg.roomNum);
-				sendMessageInRoom(io,msg.roomNum,'new player',msg.nickname+' connected');
-				//if (urooms[msg.roomNum]==2){
-					//sendMessageInRoom(io,msg.roomNum,'can guess',true);
-					//users[socket.id].setOponent(socket.adapter.rooms[])
-				//}
+				sendMessageInRoom(io,msg.roomNum,'new player',msg.nickname+' connected'+creatRoom);
+				if (urooms[msg.roomNum].length==2){
+					sendMessageInRoom(io,msg.roomNum,'can guess',true);
+					users[socket.id].setOponent(urooms[msg.roomNum][0]);
+					users[urooms[msg.roomNum][0]].setOponent(socket.id);
+				}
 			}else{
 				socket.emit('room full',"choose another one");
 			}
@@ -73,13 +76,14 @@ function guessMain(){
 		socket.on('chat message', function(msg){
 			console.log('socket '+socket.id+' message: ' + msg);
 			var user=users[socket.id];
-			console.log(socket);
+			console.log(socket.adapter.rooms[user.getRoom()]);
 			sendMessageInRoom(io,user.getRoom(),'chat message',users[socket.id].getName()+' : '+msg);
 		});
 		socket.on('guess message', function(msg){
-			console.log('socket '+socket.id+' message: ' + msg);
+			console.log('socket '+socket.id+' guess message: ' + msg);
 			var user=users[socket.id];
-			console.log(socket.adapter.rooms[user.getRoom()]);
+			var id=user.getOponent();
+			console.log(id);
 			sendMessageInRoom(io,user.getRoom(),'guess message',{gtext:users[socket.id].getName()+' guess: '+msg,plid:id});
 		});
 		socket.on('user typing', function () {
@@ -93,8 +97,21 @@ function guessMain(){
 		socket.on('disconnect', function () {
 			var user=users[socket.id];
 			console.log(socket.id+' is disconnected');
-			if (urooms[user.getRoom()]>0){
-				urooms[user.getRoom()]--;
+			if (user==undefined){return true;}
+			users[socket.id]==undefined;
+			if (urooms[user.getRoom()].length>0){
+				var id2=urooms[user.getRoom()].pop();
+				var id1=urooms[user.getRoom()].pop();
+				if (socket.id==id2){
+					if (id1!==undefined){
+						urooms[user.getRoom()].push(id1);
+					}
+				}else if (socket.id==id1){
+					if (id2!==undefined){
+						urooms[user.getRoom()].push(id2);
+					}
+				}
+				socket.leave(user.getRoom());
 			}
 			sendMessageInRoom(io,user.getRoom(),'user leave',users[socket.id].getName()+' leave');
 		});

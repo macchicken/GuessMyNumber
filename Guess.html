@@ -29,16 +29,15 @@
   <script src="jsmodule/socket.io-1.3.6.js"></script>
   <script src="jsmodule/jquery-2.1.1.min.js"></script>
 	<script type="text/javascript">
-		var socket = io();
-		var myId=socket.id;
-		console.log(socket);
+		var mysocket = io();
+		var myId;
 		$('#msend').click(function(){
-			socket.emit('chat message', $('#m').val());
+			mysocket.emit('chat message', $('#m').val());
 			$('#m').val('');
 			return false;
 		});
 		$('#guess').click(function(){
-			socket.emit('guess message', $('#g').val());
+			mysocket.emit('guess message', $('#g').val());
 			$('#g').val('');
 			$(this).attr("disabled", "disabled");
 			$(this).css("background-color", "grey");
@@ -49,45 +48,47 @@
 				alert("enter a room number");
 				return false;
 			}
-			socket.emit('user nickname', {nickname:$('#n').val(),roomNum:$.trim($("#r").val())});
+			mysocket.emit('user nickname', {nickname:$('#n').val(),roomNum:$.trim($("#r").val())});
 			document.title=$('#n').val();
+			myId=mysocket.id;
 			return false;
 		});
 		$('#m').click(function () {
 			$('#m').focus();
 		});
 		$('#m').bind('input propertychange', function() {
-			socket.emit('user typing',true);
+			mysocket.emit('user typing',true);
 			typing=true;
 			lastTypingTime = (new Date()).getTime();
 			setTimeout(function () {
 				var typingTimer = (new Date()).getTime();
 				var timeDiff = typingTimer - lastTypingTime;
 				if (timeDiff >= 1000 && typing) {
-				  socket.emit('stop typing');
+				  mysocket.emit('stop typing');
 				  typing = false;
 				}
 			}, 1000);
 		});
 
-		socket.on("can guess"),function(msg){
+		mysocket.on("can guess",function(msg){
 			$("#guess").removeAttr("disabled");
 			$("#guess").css("background-color", "#004b37");
-		}
-		socket.on("room full",function(msg){
+		});
+		mysocket.on("room full",function(msg){
 			$("#r").val(msg);
 		});
-		socket.on('chat message', function(msg){
+		mysocket.on('chat message', function(msg){
 			$('#messages').append($('<li>').text(msg));
 		});
-		socket.on('guess message', function(msg){
+		mysocket.on('guess message', function(msg){
 			$('#guessField').append($('<li>').text(msg.gtext));
+			console.log(myId);
 			if (myId==msg.plid){
 				$("#guess").removeAttr("disabled");
 				$("#guess").css("background-color", "#004b37");
 			}
 		});
-		socket.on('new player', function(msg){
+		mysocket.on('new player', function(msg){
 			console.log("new player");
 			document.title=$('#n').val();
 			$('#n').val('');
@@ -95,7 +96,7 @@
 			$(".nickname").css("display","none");
 			$('#messages').append($('<li>').text(msg));
 		});
-		socket.on('user leave', function(msg){
+		mysocket.on('user leave', function(msg){
 			$('#messages').append($('<li>').text(msg));
 		});
 	</script>
