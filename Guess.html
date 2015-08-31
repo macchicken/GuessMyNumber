@@ -100,20 +100,6 @@
 			return false;
 		}
 
-		function startGame() {
-			var number_reg = /^(\d){4}$/i;
-			var number = $("#number").val().trim();
-			if (number.length == 0) {
-				Materialize.toast("Number cannot be empty", 2000);
-				return;
-			} else if (!number_reg.test(number)) {
-				Materialize.toast("The number must have 4 digits.", 2000);
-				return;
-			}
-			socket.emit('user operation', {"operation": 51, "number": parseInt(number)});
-			return false;
-		}
-
 		$('#enter').click(function(){
 			if ($.trim($("#r").val())===""){
 				Materialize.toast("enter a room number", 2000);
@@ -136,7 +122,7 @@
 				Materialize.toast("Duplicate nickname.", 2000);
 				break;
 			case 3:
-				Materialize.toast("You have created a new room, and you are the owner.", 2000);
+				Materialize.toast("You have created a new room.", 2000);
 				break;
 			case 4:
 				Materialize.toast("You have already logged in.", 2000);
@@ -147,30 +133,25 @@
 			case 6:
 				Materialize.toast("You don't have permission to do so.", 2000);
 				break;
-			case 7: 
-				Materialize.toast("You opponent is not ready.", 2000);
-				break;
 			default:
 				console.log("Unkown error");
 			}
 		});
 
-		var isOwner = false
 		socket.on("success", function(msg) {
 			switch (msg["statusCode"]) {
+			case 100:
+				Materialize.toast("You opponent is ready.", 2000);
+				break;
 			case 101:
-				var elements = msg["content"].split(":");
 				$("#newUserContainer").hide();
 				$("#battleField").show();
-				if (elements[0] == elements[1]) {
-					isOwner = true
-					$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) start();" placeholder="New guess" maxlength="4"/><button type="button" id="start-button" class="btn-floating btn-large waves-effect waves-light red" onclick="startGame()" disabled>Start</button>');
-				} else {
-					if (!isOwner) {
-						$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="New guess" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn-floating btn-large waves-effect waves-light deep-purple lighten-2" onclick="confirmReady()">Ready</a>');
-					}
-				}
-				$('#messages').append($('<li>').text(elements[1] +" entered your room~"));
+				$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="New guess" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn-floating btn-large waves-effect waves-light deep-purple lighten-2" onclick="confirmReady()">Ready</a>');
+				$('#messages').append($('<li>').text(msg["content"] +" entered your room~"));
+				break;
+			case 102:
+				$("#outter-container").hide();
+				$("#guesses-container").show();
 				break;
 			}
 		})
@@ -185,20 +166,18 @@
 		socket.on('user operation', function(msg){
 			switch (msg["statusCode"]) {
 			case 100:
-				if (isOwner) {
-					$("#start-button").attr("disabled", false);
-				} else {
-					$("#inner-contaier").html("<h3>Please wait the host to start the game</h3>");
-				}
+				$("#inner-contaier").html("<h3>Please wait the other player to start the game</h3>");
 				break;
 			case 102:
 				$("#outter-container").hide();
 				$("#guesses-container").show();
 				break;
 			case 103:
-				$("#start-button").attr("disabled", true);
 				$("#outter-container").show();
 				$("#guesses-container").hide();
+				break;
+			case 104:
+				Materialize.toast("You opponent is not ready.", 2000);
 				break;
 			}
 		});
