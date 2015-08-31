@@ -1,103 +1,206 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Socket.IO Guess my number</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      .wrapper,.nickname { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      .wrapper input,.nickname input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      .wrapper #msend #guess,.nickname #enter { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; float: right;}
-      #messages,#states,#guessField { list-style-type: none; margin: 0; padding: 0; }
-      #messages li,#states li,#guessField li { padding: 5px 10px; }
-      #messages li:nth-child(odd),#states li:nth-child(odd),#guessField li:nth-child(odd) { background: #eee; }
-    </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-	<ul id="states"></ul>
+	<head>
+		<title>Guess My Number</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">
+		<script src="https://cdn.socket.io/socket.io-1.3.6.js"></script>
+			<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
+	</head>
+	<style type="text/css">
+	.message {
+		width: 100%;
+		height: 40px;
+		position: relative;
+	}
+	.self {
+		padding: 5px 10px 5px 10px;
+		background-color: #69f0ae;
+		border: #69f0ae 1px solid;
+		border-radius: 5px;
+	}
+	.other {
+		padding: 5px 10px 5px 10px;
+		background-color: #f06292;
+		border: #f06292 1px solid;
+		border-radius: 5px;
+		float: right;
+	}
+	</style>
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col s12">
+					<h3 class="center-align">Guess My Number</h3>
+				</div>
+			</div>
+			<div class="row" id="newUserContainer">
+				<div class="input-field col s6 offset-s3">
+					<input type="text" id="n" class="validate" autocomplete="off" placeHolder="Your nickname" maxlength="10"/>
+				</div>
+				<div class="input-field col s6 offset-s3">
+					<input type="text" id="r" class="validate" autocomplete="off" placeHolder="Room number" maxlength="10"/>
+				</div>
+				<div class="input-field col s6 offset-s3 center-align">
+					<button id="enter" class="btn waves-effect waves-light">enter</button>
+					<!--<a id="newRoom" href="javascript:;">Create New Room</a>-->
+				</div>
+			</div>
+			<div class="row" id="battleField" style="display:none;">
+				<div class="col s8 valign-wrapper" style="height:250px;" id="outter-container">
+					<div style="width:100%;" class="valign center" id="inner-contaier">
+						
+					</div>
+				</div>
+				<div class="col s8" id="guesses-container" style="display:none;">
+					<ul id="guesses" style="overflow-y: scroll;height: 200px; width:100%; max-height: 200px;"></ul>
+					<input type="number" id="g" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) sendGuess();" placeholder="New guess" maxlength="4"/>
+					<button type="button" onclick="sendGuess()" class="btn waves-effect deep-orange accent-3">Guess</button>
+				</div>
+				<div class="col s4">
+					<ul id="messages" style="overflow-y: scroll;height: 200px; width:100%; max-height: 200px;">
+					</ul>
+					<input type="text" id="m" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) sendMessage();" placeholder="New message" maxlength="200"/>
+					<button type="button" onclick="sendMessage()" class="btn waves-effect blue lighten-1">Send</button>
+				</div>
+			</div>
+		</div>
 	<ul id="guessField"></ul>
-	<div class="nickname">
-		<input id="n" autocomplete="off" placeHolder="yr nick name" maxlength="10"/><button id="enter">enter</button>
-		<input id="r" autocomplete="off" placeHolder="room number" maxlength="10"/>
-	</div>
 	<div class="wrapper" style="display:none">
-		<input id="m" autocomplete="off" maxlength="200"/><button id="msend">Send</button>
-		<input id="g" autocomplete="off" placeHolder="yr guess" maxlength="10"/><button id="guess" disabled>Guess</button>
+	<input id="g" autocomplete="off" placeHolder="yr guess" maxlength="10"/><button id="guess" disabled>Guess</button>
 	</div>
-  </body>
-  <script src="jsmodule/socket.io-1.3.6.js"></script>
-  <script src="jsmodule/jquery-2.1.1.min.js"></script>
+	</body>
 	<script type="text/javascript">
-		var mysocket = io();
-		var myId;
-		$('#msend').click(function(){
-			mysocket.emit('chat message', $('#m').val());
+
+		var socket = io();
+
+		function sendMessage() {
+			var message = $("#m").val().trim();
+			if (message.length == 0) {
+				Materialize.toast("Message cannot be empty", 2000);
+				return;
+			}
+			socket.emit('chat message', message);
 			$('#m').val('');
+			$('#m').focus();
 			return false;
-		});
-		$('#guess').click(function(){
-			mysocket.emit('guess message', $('#g').val());
-			$('#g').val('');
-			$(this).attr("disabled", "disabled");
-			$(this).css("background-color", "grey");
+		}
+
+		function confirmReady() {
+			var number_reg = /^(\d){4}$/i;
+			var number = $("#number").val().trim();
+			if (number.length == 0) {
+				Materialize.toast("Number cannot be empty", 2000);
+				return;
+			} else if (!number_reg.test(number)) {
+				Materialize.toast("The number must have 4 digits.", 2000);
+				return;
+			}
+			socket.emit('user operation', {"operation": 50, "number": parseInt(number)});
 			return false;
-		});
+		}
+
+		function startGame() {
+			var number_reg = /^(\d){4}$/i;
+			var number = $("#number").val().trim();
+			if (number.length == 0) {
+				Materialize.toast("Number cannot be empty", 2000);
+				return;
+			} else if (!number_reg.test(number)) {
+				Materialize.toast("The number must have 4 digits.", 2000);
+				return;
+			}
+			socket.emit('user operation', {"operation": 51, "number": parseInt(number)});
+			return false;
+		}
+
 		$('#enter').click(function(){
 			if ($.trim($("#r").val())===""){
-				alert("enter a room number");
+				Materialize.toast("enter a room number", 2000);
 				return false;
 			}
-			mysocket.emit('user nickname', {nickname:$('#n').val(),roomNum:$.trim($("#r").val())});
-			document.title=$('#n').val();
-			myId=mysocket.id;
+			socket.emit('user nickname', {"nickname": $('#n').val(), "roomNum": $.trim($("#r").val())});
+			document.title = $('#n').val();
 			return false;
 		});
-		$('#m').click(function () {
-			$('#m').focus();
-		});
-		$('#m').bind('input propertychange', function() {
-			mysocket.emit('user typing',true);
-			typing=true;
-			lastTypingTime = (new Date()).getTime();
-			setTimeout(function () {
-				var typingTimer = (new Date()).getTime();
-				var timeDiff = typingTimer - lastTypingTime;
-				if (timeDiff >= 1000 && typing) {
-				  mysocket.emit('stop typing');
-				  typing = false;
-				}
-			}, 1000);
-		});
 
-		mysocket.on("can guess",function(msg){
-			$("#guess").removeAttr("disabled");
-			$("#guess").css("background-color", "#004b37");
-		});
-		mysocket.on("room full",function(msg){
-			$("#r").val(msg);
-		});
-		mysocket.on('chat message', function(msg){
-			$('#messages').append($('<li>').text(msg));
-		});
-		mysocket.on('guess message', function(msg){
-			$('#guessField').append($('<li>').text(msg.gtext));
-			console.log(myId);
-			if (myId==msg.plid){
-				$("#guess").removeAttr("disabled");
-				$("#guess").css("background-color", "#004b37");
+		socket.on("error", function(msg) {
+			switch (msg["statusCode"]) {
+			case 0:
+				Materialize.toast("You failed to join this room.", 2000);
+				break;
+			case 1:
+				Materialize.toast("Room is full.", 2000);
+				break;
+			case 2:
+				Materialize.toast("Duplicate nickname.", 2000);
+				break;
+			case 3:
+				Materialize.toast("You have created a new room, and you are the owner.", 2000);
+				break;
+			case 4:
+				Materialize.toast("You have already logged in.", 2000);
+				break;
+			case 5:
+				Materialize.toast("No such room available.", 2000);
+				break;
+			case 6:
+				Materialize.toast("You don't have permission to do so.", 2000);
+				break;
+			case 7: 
+				Materialize.toast("You opponent is not ready.", 2000);
+				break;
+			default:
+				console.log("Unkown error");
 			}
 		});
-		mysocket.on('new player', function(msg){
-			console.log("new player");
-			document.title=$('#n').val();
-			$('#n').val('');
-			$(".wrapper").css("display","block");
-			$(".nickname").css("display","none");
-			$('#messages').append($('<li>').text(msg));
+
+		var isOwner = false
+		socket.on("success", function(msg) {
+			switch (msg["statusCode"]) {
+			case 101:
+				var elements = msg["content"].split(":");
+				$("#newUserContainer").hide();
+				$("#battleField").show();
+				if (elements[0] == elements[1]) {
+					isOwner = true
+					$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) start();" placeholder="New guess" maxlength="4"/><button type="button" id="start-button" class="btn-floating btn-large waves-effect waves-light red" onclick="startGame()" disabled>Start</button>');
+				} else {
+					if (!isOwner) {
+						$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="New guess" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn-floating btn-large waves-effect waves-light deep-purple lighten-2" onclick="confirmReady()">Ready</a>');
+					}
+				}
+				$('#messages').append($('<li>').text(elements[1] +" entered your room~"));
+				break;
+			}
+		})
+
+		//receive chat message from server
+		socket.on('chat message', function(msg){
+			$('#messages').append(msg);
+			var messages = document.getElementById("messages");
+			messages.scrollTop = messages.scrollHeight;
 		});
-		mysocket.on('user leave', function(msg){
-			$('#messages').append($('<li>').text(msg));
+
+		socket.on('user operation', function(msg){
+			switch (msg["statusCode"]) {
+			case 100:
+				if (isOwner) {
+					$("#start-button").attr("disabled", false);
+				} else {
+					$("#inner-contaier").html("<h3>Please wait the host to start the game</h3>");
+				}
+				break;
+			case 102:
+				$("#outter-container").hide();
+				$("#guesses-container").show();
+				break;
+			case 103:
+				$("#start-button").attr("disabled", true);
+				$("#outter-container").show();
+				$("#guesses-container").hide();
+				break;
+			}
 		});
 	</script>
 </html>
