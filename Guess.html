@@ -2,15 +2,22 @@
 <html>
 	<head>
 		<title>Guess My Number</title>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="/static/css/paper.css">
+		<link rel="stylesheet" type="text/css" href="/static/css/sweetalert.css">
+		<link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+		<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet" type="text/css">
 		<script src="https://cdn.socket.io/socket.io-1.3.6.js"></script>
 			<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="/static/js/sweetalert.min.js"></script>
 	</head>
 	<style type="text/css">
 	.message {
 		width: 100%;
 		height: 40px;
+		padding: 5px 10px 5px 10px;
 		position: relative;
 	}
 	.self {
@@ -30,45 +37,54 @@
 	<body>
 		<div class="container">
 			<div class="row">
-				<div class="col s12">
-					<h3 class="center-align">Guess My Number</h3>
+				<div class="col-md-12">
+					<h3 class="text-center">Guess My Number</h3>
 				</div>
 			</div>
 			<div class="row" id="newUserContainer">
-				<div class="input-field col s6 offset-s3">
-					<input type="text" id="n" class="validate" autocomplete="off" placeHolder="Your nickname" maxlength="10"/>
-				</div>
-				<div class="input-field col s6 offset-s3">
-					<input type="text" id="r" class="validate" autocomplete="off" placeHolder="Room number" maxlength="10"/>
-				</div>
-				<div class="input-field col s6 offset-s3 center-align">
-					<button id="enter" class="btn waves-effect waves-light">enter</button>
-					<!--<a id="newRoom" href="javascript:;">Create New Room</a>-->
+				<div class="col-md-4 col-md-offset-4">
+					<div class="form">
+						<div class="form-group">
+							<input type="text" id="n" class="form-control" autocomplete="off" placeHolder="Your nickname" onkeydown="if (event.keyCode == 13) enter();" maxlength="10"/>
+						</div>
+						<div class="form-group">
+							<input type="text" id="r" class="form-control" autocomplete="off" placeHolder="Room number" onkeydown="if (event.keyCode == 13) enter();" maxlength="10"/>
+						</div>
+						<div class="form-group text-center">
+							<button id="enter" class="btn btn-default" onclick="enter()">enter</button>
+							<!--<a id="newRoom" href="javascript:;">Create New Room</a>-->
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="row" id="battleField" style="display:none;">
-				<div class="col s8 valign-wrapper" style="height:250px;" id="outter-container">
-					<div style="width:100%;" class="valign center" id="inner-contaier">
-						
+				<div class="col-md-4 col-md-offset-2" style="height:300px;" id="outter-container">
+					<div class="form-inline" id="inner-contaier">
+						<div class="form-group">
+							<input type="text" id="number" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="Enter your number here (each digit must be different)" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn btn-fill btn-info" onclick="confirmReady()">Ready</a>
+						</div>
 					</div>
 				</div>
-				<div class="col s8" id="guesses-container" style="display:none;">
-					<ul id="guesses" style="overflow-y: scroll;height: 200px; width:100%; max-height: 200px;"></ul>
-					<input type="number" id="g" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) sendGuess();" placeholder="New guess" maxlength="4"/>
-					<button type="button" onclick="sendGuess()" class="btn waves-effect deep-orange accent-3">Guess</button>
+				<div class="col-md-4 col-md-offset-2" id="guesses-container" style="display:none;">
+					<ul id="guesses" class="list-unstyled" style="overflow-y: scroll;height: 400px; width:100%; max-height: 400px;"></ul>
+					<div class="form-inline">
+						<div class="form-group center-block">
+							<input type="text" id="g" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) guess();" placeholder="New guess (each digit must be different)" maxlength="4"/>
+							<button type="button" onclick="guess()" class="btn waves-effect deep-orange accent-3">Guess</button>
+						</div>
+					</div>
 				</div>
-				<div class="col s4">
-					<ul id="messages" style="overflow-y: scroll;height: 200px; width:100%; max-height: 200px;">
-					</ul>
-					<input type="text" id="m" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) sendMessage();" placeholder="New message" maxlength="200"/>
-					<button type="button" onclick="sendMessage()" class="btn waves-effect blue lighten-1">Send</button>
+				<div class="col-md-4">
+					<ul id="messages" class="list-unstyled" style="overflow-y: scroll;height: 400px; width:100%; max-height: 400px;"></ul>
+					<div class="form-inline">
+						<div class="form-group">
+							<input type="text" id="m" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) sendMessage();" placeholder="New message" maxlength="200"/>
+							<button type="button" onclick="sendMessage()" class="btn btn-fill btn-success">Send</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
-	<ul id="guessField"></ul>
-	<div class="wrapper" style="display:none">
-	<input id="g" autocomplete="off" placeHolder="yr guess" maxlength="10"/><button id="guess" disabled>Guess</button>
-	</div>
 	</body>
 	<script type="text/javascript">
 
@@ -77,8 +93,8 @@
 		function sendMessage() {
 			var message = $("#m").val().trim();
 			if (message.length == 0) {
-				Materialize.toast("Message cannot be empty", 2000);
-				return;
+				swal({title: "warning", text: "Message cannot be empty", type: "warning"});
+				return false;
 			}
 			socket.emit('chat message', message);
 			$('#m').val('');
@@ -90,48 +106,102 @@
 			var number_reg = /^(\d){4}$/i;
 			var number = $("#number").val().trim();
 			if (number.length == 0) {
-				Materialize.toast("Number cannot be empty", 2000);
-				return;
+				swal({title: "warning", text: "Number cannot be empty!", type: "warning"});
+				return false;
 			} else if (!number_reg.test(number)) {
-				Materialize.toast("The number must have 4 digits.", 2000);
-				return;
+				swal({title: "warning", text: "The number must have 4 digits!", type: "warning"});
+				return false;
+			} else if (!examine(number)) {
+				//numbers must be different
+				swal({title: "warning", text: "Digits must be different!", type: "warning"});
+				return false;
 			}
-			socket.emit('user operation', {"operation": 50, "number": parseInt(number)});
+			socket.emit('user operation', {"operation": "50", "number": number});
 			return false;
 		}
 
-		$('#enter').click(function(){
-			if ($.trim($("#r").val())===""){
-				Materialize.toast("enter a room number", 2000);
+		function guess() {
+			var guess_reg = /^(\d){4}$/i;
+			var guess = $("#g").val().trim();
+			if (guess.length == 0) {
+				swal({title: "warning", text: "Guess cannot be empty!", type: "warning"});
+				return false;
+			} else if (!guess_reg.test(guess)) {
+				swal({title: "warning", text: "The number must have 4 digits!", type: "warning"});
+				return false;
+			} else if (!examine(guess)) {
+				//number must be different
+				swal({title: "warning", text: "Digits must be different!", type: "warning"});
 				return false;
 			}
-			socket.emit('user nickname', {"nickname": $('#n').val(), "roomNum": $.trim($("#r").val())});
-			document.title = $('#n').val();
+			socket.emit('user operation', {"operation": "52", "number": guess});
+		}
+
+		function examine(number) {
+			var i;
+			var j;
+			for (i = 0; i < 4; i++) {
+				for (j = i + 1; j < 4; j++) {
+					if (number[j] == number[i]) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		function enter() {
+			var nickname = $("#n").val().trim();
+			var roomNum = $("#r").val().trim();
+
+			if (nickname.length == 0) {
+				swal({title: "warning", text: "Enter a nickname!", type: "warning"});
+				return false;
+			}
+
+			if (roomNum.length == 0){
+				swal({title: "warning", text: "Enter a room number!", type: "warning"});
+				return false;
+			}
+			socket.emit('user nickname', {"nickname": nickname, "roomNum": roomNum});
 			return false;
-		});
+		}
 
 		socket.on("error", function(msg) {
 			switch (msg["statusCode"]) {
 			case 0:
-				Materialize.toast("You failed to join this room.", 2000);
+				swal({title: "warning", text: "You failed to join this room!", type: "warning"});
 				break;
 			case 1:
-				Materialize.toast("Room is full.", 2000);
+				swal({title: "warning", text: "Room is full!", type: "warning"});
 				break;
 			case 2:
-				Materialize.toast("Duplicate nickname.", 2000);
+				swal({title: "warning", text: "Duplicate nickname!", type: "warning"});
 				break;
 			case 3:
-				Materialize.toast("You have created a new room.", 2000);
+				$('#messages').append($('<li>').text("You created a room."));
+				//swal({title: "warning", text: "You have created a new room!", type: "warning"});
 				break;
 			case 4:
-				Materialize.toast("You have already logged in.", 2000);
+				swal({title: "warning", text: "You have already logged in!", type: "warning"});
 				break;
 			case 5:
-				Materialize.toast("No such room available.", 2000);
+				swal({title: "warning", text: "No such room available!", type: "warning"});
 				break;
 			case 6:
-				Materialize.toast("You don't have permission to do so.", 2000);
+				swal({title: "warning", text: "You don't have permission to do so!", type: "warning"});
+				break;
+			case 7:
+				$('#messages').append("Your opponent left the room, the game stopped.");
+				$("#inner-contaier").html('<div class="form-group"><input type="text" id="number" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="Enter your number here (each digit must be different)" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn btn-fill btn-info" onclick="confirmReady()">Ready</a></div>');
+				$("#outter-container").show();
+				$("#guesses-container").hide();
+				break;
+			case 8:
+				swal({title: "warning", text: "Your opponent is not ready!", type: "warning"});
+				break;
+			case 9:
+				swal({title: "warning", text: "Digits must be different!", type: "warning"});
 				break;
 			default:
 				console.log("Unkown error");
@@ -141,18 +211,31 @@
 		socket.on("success", function(msg) {
 			switch (msg["statusCode"]) {
 			case 100:
-				Materialize.toast("You opponent is ready.", 2000);
+				swal({title: "warning", text: "Your opponent is ready!", type: "warning"});
 				break;
 			case 101:
 				$("#newUserContainer").hide();
 				$("#battleField").show();
-				$(".valign").html('<input type="number" id="number" class="validate" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="New guess" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn-floating btn-large waves-effect waves-light deep-purple lighten-2" onclick="confirmReady()">Ready</a>');
-				$('#messages').append($('<li>').text(msg["content"] +" entered your room~"));
+				$('#messages').append($('<li>').text(msg["content"] +" entered the room~"));
 				break;
 			case 102:
 				$("#outter-container").hide();
+				$("#guesses").html('');
 				$("#guesses-container").show();
 				break;
+			case 103:
+				var results = msg["content"].split(":");
+				$("#guesses").append($('<li>').text('You opponent got ' + results[0] + ' A '+ results[1] + ' B'));
+				break;
+			case 104:
+				$("#messages").append($('<li class="message">').html('<span class="other">Your opponent won the game.</span>'));
+				swal({title: "Sorry", text: "You lost the game!", type: "danger"});
+				setTimeout(function() {
+					$("#inner-contaier").html('<div class="form-group"><input type="text" id="number" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="Enter your number here (each digit must be different)" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn btn-fill btn-info" onclick="confirmReady()">Ready</a></div>');
+					$("#outter-container").show();
+					$("#guesses-container").hide();
+				}, 3000);
+					break;
 			}
 		})
 
@@ -163,22 +246,37 @@
 			messages.scrollTop = messages.scrollHeight;
 		});
 
-		socket.on('user operation', function(msg){
+		socket.on('self', function(msg){
 			switch (msg["statusCode"]) {
 			case 100:
 				$("#inner-contaier").html("<h3>Please wait the other player to start the game</h3>");
 				break;
+			case 101:
+				$("#newUserContainer").hide();
+				$("#battleField").show();
+				//$('#messages').append($('<li>').text(msg["content"] +" entered the room~"));
+				break;
 			case 102:
 				$("#outter-container").hide();
+				$("#guesses").html('');
 				$("#guesses-container").show();
 				break;
 			case 103:
-				$("#outter-container").show();
-				$("#guesses-container").hide();
+				var results = msg["content"].split(":");
+				$("#guesses").append($('<li>').text('You guessed ' + $("#g").val().trim() + ' and got ' + results[0] + ' A '+ results[1] + ' B'));
+				$("#g").val('');
+				var guesses = document.getElementById("guesses");
+				guesses.scrollTop = guesses.scrollHeight;
 				break;
 			case 104:
-				Materialize.toast("You opponent is not ready.", 2000);
-				break;
+				$("#messages").append($('<li class="message">').html('<span class="self">You won the game.</span>'));
+				swal({title: "Congratulation", text: "You won the game!", type: "success"});
+				setTimeout(function() {
+					$("#inner-contaier").html('<div class="form-group"><input type="text" id="number" class="form-control" autocomplete="off" onkeydown="if (event.keyCode == 13) confirmReady();" placeholder="Enter your number here (each digit must be different)" maxlength="4"/><a href="javascript:;" id="ready-button" class="btn btn-fill btn-info" onclick="confirmReady()">Ready</a></div>');
+					$("#outter-container").show();
+					$("#guesses-container").hide();
+				}, 3000);
+					break;
 			}
 		});
 	</script>
